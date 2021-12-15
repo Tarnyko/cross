@@ -79,6 +79,10 @@ impl Environment {
         self.get_values_for("ENV_VOLUMES", target)
     }
 
+    fn additional_targets(&self, target: &Target) -> (Option<Vec<String>>, Option<Vec<String>>) {
+        self.get_values_for("ENV_ADDITIONAL_TARGETS", target)
+    }
+
     fn get_values_for(
         &self,
         var: &str,
@@ -175,6 +179,16 @@ impl Config {
         let mut collected = Self::sum_of_env_toml_values(toml_getter, env_build)?;
 
         let toml_getter = || self.toml.as_ref().map(|t| t.env_volumes_target(target));
+        collected.extend(Self::sum_of_env_toml_values(toml_getter, env_target)?);
+
+        Ok(collected)
+    }
+
+    pub fn additional_targets(&self, target: &Target) -> Result<Vec<String>> {
+        let (env_build, env_target) = self.env.additional_targets(target);
+        let toml_getter = || self.toml.as_ref().map(|t| t.env_additional_targets_build());
+        let mut collected = Self::sum_of_env_toml_values(toml_getter, env_build)?;
+        let toml_getter = || self.toml.as_ref().map(|t| t.env_additional_targets_target(target));
         collected.extend(Self::sum_of_env_toml_values(toml_getter, env_target)?);
 
         Ok(collected)
